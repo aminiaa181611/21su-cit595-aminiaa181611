@@ -117,7 +117,8 @@ void executeShell(int timeout) {
                     exit(EXIT_FAILURE);
                 }
             } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-        }
+        }  
+        free(command);      
     }
 }
 
@@ -145,41 +146,24 @@ char *getCommandFromInput() {
     const int size = 1024;
 
     char * input = (char *)calloc(size, sizeof(char));
-
-    // fill the allocated memory with 0
-    // we could use bzero or memset
-    // but we do it manually 
-    for (size_t i = 0; i < size; i++)
-    {
-        input[i] = '\0';
+    int index = 0;
+    char ch;
+    read(STDIN_FILENO, &ch, 1);
+    if(ch == EOF){
+        exit(0);
+    }
+    while(ch != '\n'){
+        if(ch != ' '){
+            input[index] = ch;
+            index++;        
+        }
+        read(STDIN_FILENO, &ch, 1);
+        if(ch == EOF){
+            exit(0);
+        }
     }
     
-
-    // only use read
-    read(STDIN_FILENO, input, size);
-
-    // get the last byte of the array
-    char * last = input + size;
-    // left trim
-    size_t i;
-    for (i = 0; i < size 
-                && input[i] == ' ' // clear space
-            ; i++)
-    {
-        input[i] = '\0'; // set it to termination charater
-        input++; // move forward
-    }
-
-    // right trim
-    while (last != input &&
-            ( (*last) == '\n' // clear new line character
-            || (*last) == '\0' // ignore termination character 
-             || (*last) == ' '  // clear space charater
-             ) )
-    {
-        (*last) = '\0'; // set it to termination charater
-        last--; // step back
-    }
-    
+    input[index] = '\0';
+    writeToStdout(input);
     return input;  
 }
